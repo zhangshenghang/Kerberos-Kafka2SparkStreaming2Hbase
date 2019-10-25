@@ -1,5 +1,5 @@
 package com.jast.hbase.utils
-import java.io.File
+import java.io.{File, FileInputStream}
 import java.security.PrivilegedAction
 import java.util
 
@@ -29,16 +29,22 @@ object HbaseUtil {
     if(!coreFile.exists()) {
       val in = HbaseUtil.getClass.getClassLoader.getResourceAsStream("hbase-conf/core-site.xml")
       configuration.addResource(in)
+    }else{
+      configuration.addResource(new FileInputStream(coreFile))
     }
     val hdfsFile = new File(confPath + File.separator + "hdfs-site.xml")
     if(!hdfsFile.exists()) {
       val in = HbaseUtil.getClass.getClassLoader.getResourceAsStream("hbase-conf/hdfs-site.xml")
       configuration.addResource(in)
+    }else{
+      configuration.addResource(new FileInputStream(hdfsFile))
     }
     val hbaseFile = new File(confPath + File.separator + "hbase-site.xml")
     if(!hbaseFile.exists()) {
       val in = HbaseUtil.getClass.getClassLoader.getResourceAsStream("hbase-conf/hbase-site.xml")
       configuration.addResource(in)
+    }else{
+      configuration.addResource(new FileInputStream(hbaseFile))
     }
 
     UserGroupInformation.setConfiguration(configuration)
@@ -50,7 +56,15 @@ object HbaseUtil {
     })
   }
 
-
+  /**
+   * @TODO　插入数据
+   * @param connection
+   * @param tableName
+   * @param rowkey
+   * @param columnFamily
+   * @param columns
+   * @return
+   */
   def putData(connection:Connection,tableName:String,rowkey:String,columnFamily:String,columns:util.HashMap[String,String]):Boolean={
     val put = new Put(Bytes.toBytes(rowkey))
     val table = connection.getTable(TableName.valueOf(tableName))

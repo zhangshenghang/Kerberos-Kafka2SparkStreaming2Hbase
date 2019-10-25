@@ -6,6 +6,7 @@ import java.util.Properties
 
 import com.alibaba.fastjson.JSONObject
 import com.jast.hbase.data.convert.HbaseDataProcessor
+import com.jast.hbase.utils.HbaseUtil
 import org.apache.commons.lang.StringUtils
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.log4j.{Level, Logger}
@@ -13,7 +14,6 @@ import org.apache.spark.{SparkConf, TaskContext}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.kafka010.{ConsumerStrategies, HasOffsetRanges, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-import com.jast.hbase.utils.HbaseUtil
 
 
 
@@ -32,7 +32,7 @@ import com.jast.hbase.utils.HbaseUtil
 //    --conf "spark.executor.extraJavaOptions=-Djava.security.auth.login.config=/home/jast/k2s2h/conf/jaas.conf" \
 //    hbase-data-save-1.0-SNAPSHOT.jar
 
-object Kafka2Streaming2Hbase {
+object Kafka2Streaming2HbaseCount {
 
 
   Logger.getLogger("com").setLevel(Level.ERROR) //设置日志级别
@@ -73,6 +73,7 @@ object Kafka2Streaming2Hbase {
       System.setProperty("java.security.krb5.conf", "C:\\Users\\Administrator\\eclipse-workspace\\kafka\\src\\main\\resources\\krb5.conf")
     }
     else{
+      println("jin ru ")
       System.setProperty("java.security.auth.login.config", jaasFilePath)
     }
 
@@ -90,6 +91,7 @@ object Kafka2Streaming2Hbase {
         .getOrCreate()
     }else{
        spark = SparkSession.builder()
+
         .appName("Kafka2Spark2HBase-kerberos").
         config(new SparkConf())
         .getOrCreate()
@@ -113,13 +115,24 @@ object Kafka2Streaming2Hbase {
       rdd.foreachPartition(partitionRecords => {
         val o = offsetRanges(TaskContext.get.partitionId)
         println(s"${o.topic} ${o.partition} ${o.fromOffset} ${o.untilOffset}")
-        val connection = HbaseUtil.getHBaseConn(confPath, hbasePrincipal, keytabFilePath) // 获取Hbase连接
-        //kafka topic hbase_data data process
-        partitionRecords.foreach(HbaseDataProcessor.topicHbaseData(_,connection))
+        if(o.topic == "test_topic") {
+          println("---"+partitionRecords.length)
+          partitionRecords.foreach(msg => {
+            println("-----" + msg.value())
+          })
+
+//          partitionRecords.foreach(HbaseConvert.topicHbaseData)
+
+        }
+        if(o.topic == "test_topic") {
+          println("+++"+partitionRecords.length)
+          partitionRecords.foreach(msg => {
+            println("+++++"+msg.value().substring(0,10))
+          })
+        }
 
       })
     })
-
     ssc.start()
     ssc.awaitTermination()
   }
